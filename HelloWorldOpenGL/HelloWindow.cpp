@@ -6,7 +6,11 @@
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 
-/* Shader written in GLSL */
+/******************************************************************************************************************************* 
+Shaders written in GLSL
+*******************************************************************************************************************************/
+
+/* Vertex shader */
 const char* vertexShaderSource = 
 "#version 330 core\n" // Version declaration
 
@@ -21,8 +25,26 @@ const char* vertexShaderSource =
 "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n" 
 "}\0";
 
+/* Fragment shader */
+/* For color! */
+const char* fragmentShaderSource = 
+"#version 330 core\n"
+"out vec4 FragColor;\n"
+"void main()\n"
+"{\n"
+"   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n" // Represented in RGBA
+"}\n\0";
+
+/*******************************************************************************************************************************
+End shaders written in GLSL
+*******************************************************************************************************************************/
+
 int main()
 {
+
+    /*******************************************************************************************************************************
+    Window setup
+    *******************************************************************************************************************************/
     glfwInit();
 
     /* Set version */
@@ -52,7 +74,15 @@ int main()
         std::cout << "Failed to initialize GLAD" << std::endl;
         return -1;
     }
+    /*******************************************************************************************************************************
+    End window setup
+    *******************************************************************************************************************************/
 
+
+
+    /*******************************************************************************************************************************
+    Shader operations
+    *******************************************************************************************************************************/
     /* In order for OpenGL to use the shader it has to dynamically compile it at run-time from its source code */
     unsigned int vertexShader; // vertexShader will be stored as an unsigned int
     vertexShader = glCreateShader(GL_VERTEX_SHADER); // We provide the type of shader we want to create as an argument.
@@ -65,7 +95,7 @@ int main()
        4: (Tutorial just says to leave NULL */
     glShaderSource(vertexShader, 1, &vertexShaderSource, NULL); 
 
-    /* Compile vertex shader */
+    /* Compile vertex shader written in GLSL */
     glCompileShader(vertexShader); 
 
     /* Check for successful compilation */
@@ -78,6 +108,24 @@ int main()
         std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
     }
 
+    int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+    glCompileShader(fragmentShader);
+    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
+    if (!success)
+    {
+        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
+        std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
+    }
+    /*******************************************************************************************************************************
+    End shader operations
+    *******************************************************************************************************************************/
+
+
+
+    /*******************************************************************************************************************************
+    Buffer operations
+    *******************************************************************************************************************************/
     /* Triangle coordinates */
     /* These NDCs(Normalized Device Coordinates) will be transformed 
        to screen-space coordinates via the viewport transform using the data we provided with glViewport. 
@@ -107,14 +155,16 @@ int main()
             b: GL_STATIC_DRAW: data is set once and used many times.
             c: GL_DYNAMIC_DRAW: data is changed and used many times */
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); // Our triangle does not move, is used a lot, and stays the same.
+    /*******************************************************************************************************************************
+    End buffer operations
+    *******************************************************************************************************************************/
 
-    /* Set dimensions of rendering window */
-    /* OpenGL uses the data specified via glViewport to transform the 2d coordinates it processed to coordinates on the screen 
-       A point of locations (-0.5, 0.5) would be mapped to (200, 450) in screen coordinates.
-       Processed coordinates in OpenGL are between -1 and 1. We effectively map from (-1, 1) to (0, 800) and (0, 600) */
-    glViewport(0, 0, 800, 600); // this IS different from the dimensions in CreateWindow()
 
-    /* Render loop */
+
+
+    /*******************************************************************************************************************************
+    Render loop
+    *******************************************************************************************************************************/
     while (!glfwWindowShouldClose(window))
     {
         // Input
@@ -127,8 +177,9 @@ int main()
         glfwSwapBuffers(window); // Double buffered. Avoid flickering issues common to single buffer
         glfwPollEvents(); // Check for mouse/keyboard input etc.
     }
-
-    // Render loop exited
+    /*******************************************************************************************************************************
+    End render loop
+    *******************************************************************************************************************************/
     glfwTerminate();
     return 0;
 }
@@ -138,8 +189,15 @@ int main()
 /* Whenever the window changes in size, GLFW calls this functionand fills in the proper arguments */
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
-    glViewport(0, 0, width, height);
+    /* Set dimensions of rendering window */
+    /* OpenGL uses the data specified via glViewport to transform the 2d coordinates it processed to coordinates on the screen
+       A point of locations (-0.5, 0.5) would be mapped to (200, 450) in screen coordinates.
+       Processed coordinates in OpenGL are between -1 and 1. We effectively map from (-1, 1) to (0, 800) and (0, 600) */
+    glViewport(0, 0, width, height); // this IS different from the dimensions in CreateWindow()
 }
+
+
+
 
 void processInput(GLFWwindow* window)
 {
