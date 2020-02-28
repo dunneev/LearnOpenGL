@@ -53,6 +53,31 @@ int main()
         return -1;
     }
 
+    /* In order for OpenGL to use the shader it has to dynamically compile it at run-time from its source code */
+    unsigned int vertexShader; // vertexShader will be stored as an unsigned int
+    vertexShader = glCreateShader(GL_VERTEX_SHADER); // We provide the type of shader we want to create as an argument.
+
+    /* Attach the shader source to the shader object. */
+    /* Parameters:
+       1: Shader object to compile
+       2: Number of strings we're passing as source code
+       3: Source code
+       4: (Tutorial just says to leave NULL */
+    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL); 
+
+    /* Compile vertex shader */
+    glCompileShader(vertexShader); 
+
+    /* Check for successful compilation */
+    int success;
+    char infoLog[512];
+    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+    if (!success)
+    {
+        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+        std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+    }
+
     /* Triangle coordinates */
     /* These NDCs(Normalized Device Coordinates) will be transformed 
        to screen-space coordinates via the viewport transform using the data we provided with glViewport. 
