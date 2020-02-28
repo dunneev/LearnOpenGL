@@ -6,6 +6,21 @@
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 
+/* Shader written in GLSL */
+const char* vertexShaderSource = 
+"#version 330 core\n" // Version declaration
+
+/* Declare all input vertex attributes in vertex shader with "in" keyword */
+/* Right now all we care about position, so we only need a single vertex attribute */
+"layout (location = 0) in vec3 aPos;\n" 
+
+"void main()\n"
+"{\n"
+/* To set the output of the vertex shader we have to assign the position data to the predefined gl_Position variable*/
+/* gl_Position is a vec4 behind the scenes. As such, we have to cast our input(vec3) to vec4*/
+"   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n" 
+"}\0";
+
 int main()
 {
     glfwInit();
