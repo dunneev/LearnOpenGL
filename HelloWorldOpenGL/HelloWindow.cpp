@@ -1,5 +1,6 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+
 #include <iostream>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -37,11 +38,40 @@ int main()
         return -1;
     }
 
+    /* Triangle coordinates */
+    /* These NDCs(Normalized Device Coordinates) will be transformed 
+       to screen-space coordinates via the viewport transform using the data we provided with glViewport. 
+       The resulting screen-space coordinates are then transformed to fragments as inputs to our fragment shader. */
+    float vertices[] = {
+    -0.5f, -0.5f, 0.0f,
+     0.5f, -0.5f, 0.0f,
+     0.0f,  0.5f, 0.0f
+    };
+
+    /* Vertex Buffer Object*/
+    unsigned int VBO;
+    glGenBuffers(1, &VBO); // Generate 1 VBO and store buffer reference ID in &VBO
+
+    // OpenGL allows us to bind several buffers at once as long as they have a different buffer type.
+    glBindBuffer(GL_ARRAY_BUFFER, VBO); // Bind the newly created VBO to the GL_ARRAY_BUFFER
+    // Any buffer calls we make on the GL_ARRAY_BUFFER target will be used to configure the currently bound buffer (VBO)
+
+    /* Copies the previously defined vertex data into the buffer's memory */
+    /* This function is specifically targeted to copy user-defined data into the currently bound buffer */
+    /* ARGUMENTS: 
+       1: Type of buffer we want to copy data into. In this case it's the VBO currently bound to the GL_ARRAY_BUFFER target. 
+       2: The size of the data.\
+       3: Actual data we want to send
+       4: How we want the graphics card to manage the data. There are 3 ways:
+            a: GL_STREAM_DRAW: data is set once and used by the GPU at most few times.
+            b: GL_STATIC_DRAW: data is set once and used many times.
+            c: GL_DYNAMIC_DRAW: data is changed and used many times */
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); // Our triangle does not move, is used a lot, and stays the same.
+
     /* Set dimensions of rendering window */
     /* OpenGL uses the data specified via glViewport to transform the 2d coordinates it processed to coordinates on the screen 
        A point of locations (-0.5, 0.5) would be mapped to (200, 450) in screen coordinates.
-       Processed coordinates in OpenGL are between -1 and 1. We effectively map from (-1, 1) to (0, 800) and (0, 600) 
-    */
+       Processed coordinates in OpenGL are between -1 and 1. We effectively map from (-1, 1) to (0, 800) and (0, 600) */
     glViewport(0, 0, 800, 600); // this IS different from the dimensions in CreateWindow()
 
     /* Render loop */
