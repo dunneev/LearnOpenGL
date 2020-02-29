@@ -117,6 +117,28 @@ int main()
         glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
         std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
     }
+
+    /* Link shaders */
+    unsigned int shaderProgram;
+    shaderProgram = glCreateProgram(); // Returns ID reference
+    glAttachShader(shaderProgram, vertexShader);
+    glAttachShader(shaderProgram, fragmentShader);
+    glLinkProgram(shaderProgram);
+
+    /* Check for linking errors */
+    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+    if (!success) {
+        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+        std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+    }
+
+    /* Linking results in a program object we can call like so: 
+    glUseProgram(shaderProgram); 
+    Every shader and rendering call after glUseProgram will use this program (and, by extension, its shaders) */
+
+    /* Delete shader objects, as we no longer need them */
+    glDeleteShader(vertexShader);
+    glDeleteShader(fragmentShader);
     /*******************************************************************************************************************************
     End shader operations
     *******************************************************************************************************************************/
