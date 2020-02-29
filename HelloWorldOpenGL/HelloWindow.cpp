@@ -108,6 +108,7 @@ int main()
         std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
     }
 
+
     int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
     glCompileShader(fragmentShader);
@@ -136,7 +137,7 @@ int main()
     glUseProgram(shaderProgram); 
     Every shader and rendering call after glUseProgram will use this program (and, by extension, its shaders) */
 
-    /* Delete shader objects, as we no longer need them */
+    /* Delete shader objects as we no longer need them */
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
     /*******************************************************************************************************************************
@@ -165,6 +166,26 @@ int main()
     // OpenGL allows us to bind several buffers at once as long as they have a different buffer type.
     glBindBuffer(GL_ARRAY_BUFFER, VBO); // Bind the newly created VBO to the GL_ARRAY_BUFFER
     // Any buffer calls we make on the GL_ARRAY_BUFFER target will be used to configure the currently bound buffer (VBO)
+
+    /* Each vertex attribute takes its data from memory that is managed by a VBO. The VBO that it takes its data from is 
+       determined by the VBO currently bound to GL_ARRAY_BUFFER when calling glVertexAttribPointer. 
+       Since the previously defined VBO is still bound, 
+       calling glVertexAttribPointer below will result in vertex attribute 0 associated with said VBO's vertex data */
+
+    /* Tell OpenGL how to interpret vertex data per vertex attribute
+    Parameters are as follows:
+    1: Which vertex attribute we want to configure. 
+       We specified the location of the position vertex attribute in the vertex shader code with layout (location = 0)
+       This sets the location of the vertex attribute to 0. Since we want to pass data to this vertex attribute, we pass 0.
+    2: Size of the vertex attribute. In this case, it's a vec3. 3 values.
+    3: Type of data. vecs in GLSL consist of floating point values.
+    4: Specifies if we want the data to be normalized. This is not relevant to us. We leave it GL_FALSE
+    5: Stride. This is the space between consecutive vertex attributes(See VertexBufferData.png).
+    6: Offset of where the position data begins in the buffer. For now, the position data is at the start of the data array. */
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+
+
 
     /* Copies the previously defined vertex data into the buffer's memory */
     /* This function is specifically targeted to copy user-defined data into the currently bound buffer */
@@ -202,6 +223,9 @@ int main()
     /*******************************************************************************************************************************
     End render loop
     *******************************************************************************************************************************/
+
+
+
     glfwTerminate();
     return 0;
 }
