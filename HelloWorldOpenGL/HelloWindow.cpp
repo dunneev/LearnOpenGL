@@ -159,12 +159,40 @@ int main()
      0.0f,  0.5f, 0.0f
     };
 
-    /* Vertex Buffer Object*/
-    unsigned int VBO;
+    /* Vertex Buffer Object */
+    /* VBOs store a large number of vertices in the GPU's memory. 
+    This is ideal because the data will then reside in the video device memory rather than system memory. Speed! */
+    unsigned int VBO; 
+
+    /* Vertex Array Object */
+    /* Core OpenGL *requires* we use a VAO so it knows what to do with our vertex inputs */
+    /*VAOs store the following:
+        1: Calls to glEnableVertexAttribArray/glDisableVertexAttribArray
+        2: Vertex attribute configurations via glVertexAttribPinter
+        3: Vertex buffer onjects associated with vertex attributes by calls to glVertexAttribPointer
+      (See VertexArrayObjects.png) */
+    unsigned int VAO;
+
+    glGenVertexArrays(1, &VAO); // Generate 1 VAO and store VAO ID
     glGenBuffers(1, &VBO); // Generate 1 VBO and store buffer reference ID in &VBO
+
+    /* Bind VAO first, then bind and set VBO(s), then configure vertex attribute(s) */
+    glBindVertexArray(VAO);
 
     // OpenGL allows us to bind several buffers at once as long as they have a different buffer type.
     glBindBuffer(GL_ARRAY_BUFFER, VBO); // Bind the newly created VBO to the GL_ARRAY_BUFFER
+    /* Copies the previously defined vertex data into the buffer's memory */
+    /* This function is specifically targeted to copy user-defined data into the currently bound buffer */
+    /* ARGUMENTS:
+       1: Type of buffer we want to copy data into. In this case it's the VBO currently bound to the GL_ARRAY_BUFFER target.
+       2: The size of the data.\
+       3: Actual data we want to send
+       4: How we want the graphics card to manage the data. There are 3 ways:
+            a: GL_STREAM_DRAW: data is set once and used by the GPU at most few times.
+            b: GL_STATIC_DRAW: data is set once and used many times.
+            c: GL_DYNAMIC_DRAW: data is changed and used many times */
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); // Our triangle does not move, is used a lot, and stays the same.
+
     // Any buffer calls we make on the GL_ARRAY_BUFFER target will be used to configure the currently bound buffer (VBO)
 
     /* Each vertex attribute takes its data from memory that is managed by a VBO. The VBO that it takes its data from is 
@@ -174,30 +202,27 @@ int main()
 
     /* Tell OpenGL how to interpret vertex data per vertex attribute
     Parameters are as follows:
-    1: Which vertex attribute we want to configure. 
-       We specified the location of the position vertex attribute in the vertex shader code with layout (location = 0)
-       This sets the location of the vertex attribute to 0. Since we want to pass data to this vertex attribute, we pass 0.
-    2: Size of the vertex attribute. In this case, it's a vec3. 3 values.
-    3: Type of data. vecs in GLSL consist of floating point values.
-    4: Specifies if we want the data to be normalized. This is not relevant to us. We leave it GL_FALSE
-    5: Stride. This is the space between consecutive vertex attributes(See VertexBufferData.png).
-    6: Offset of where the position data begins in the buffer. For now, the position data is at the start of the data array. */
+        1: Which vertex attribute we want to configure. 
+           We specified the location of the position vertex attribute in the vertex shader code with layout (location = 0)
+           This sets the location of the vertex attribute to 0. Since we want to pass data to this vertex attribute, we pass 0.
+        2: Size of the vertex attribute. In this case, it's a vec3. 3 values.
+        3: Type of data. vecs in GLSL consist of floating point values.
+        4: Specifies if we want the data to be normalized. This is not relevant to us. We leave it GL_FALSE
+        5: Stride. This is the space between consecutive vertex attributes(See VertexBufferData.png).
+        6: Offset of where the position data begins in the buffer. For now, the position data is at the start of the data array. */
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
+    /* The call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind */
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+    // We can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
+    // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
+    glBindVertexArray(0);
 
-    /* Copies the previously defined vertex data into the buffer's memory */
-    /* This function is specifically targeted to copy user-defined data into the currently bound buffer */
-    /* ARGUMENTS: 
-       1: Type of buffer we want to copy data into. In this case it's the VBO currently bound to the GL_ARRAY_BUFFER target. 
-       2: The size of the data.\
-       3: Actual data we want to send
-       4: How we want the graphics card to manage the data. There are 3 ways:
-            a: GL_STREAM_DRAW: data is set once and used by the GPU at most few times.
-            b: GL_STATIC_DRAW: data is set once and used many times.
-            c: GL_DYNAMIC_DRAW: data is changed and used many times */
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); // Our triangle does not move, is used a lot, and stays the same.
+    // uncomment this call to draw in wireframe polygons.
+    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
     /*******************************************************************************************************************************
     End buffer operations
     *******************************************************************************************************************************/
@@ -216,6 +241,16 @@ int main()
         // Render
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f); // Set color to clear the screen with
         glClear(GL_COLOR_BUFFER_BIT); // Clear color buffer and and fill with color specified in glClearColor
+
+        /* Use the compiled shader program */
+        glUseProgram(shaderProgram);
+
+        /* We only have a single VAO - no need to bind it every time - but we'll do so to keep things a bit more organized */
+        glBindVertexArray(VAO); 
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+        // glBindVertexArray(0); // no need to unbind it every time 
+
+        glDrawArrays(GL_TRIANGLES, 0, 3);
 
         glfwSwapBuffers(window); // Double buffered. Avoid flickering issues common to single buffer
         glfwPollEvents(); // Check for mouse/keyboard input etc.
