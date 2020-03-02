@@ -160,7 +160,7 @@ int main()
     };
 
     /* Vertex Buffer Object */
-    /* VBOs store a large number of vertices in the GPU's memory. 
+    /* VBOs store a large number of data in the GPU's memory. This could be vertices, color, normals, WHATEVER.
     This is ideal because the data will then reside in the video device memory rather than system memory. Speed! */
     unsigned int VBO; 
 
@@ -170,7 +170,7 @@ int main()
         1: Calls to glEnableVertexAttribArray/glDisableVertexAttribArray
         2: Vertex attribute configurations via glVertexAttribPinter
         3: Vertex buffer onjects associated with vertex attributes by calls to glVertexAttribPointer
-      (See VertexArrayObjects.png) */
+      (See VertexArrayObjects1.png and See VertexArrayObjects2.png) */
     unsigned int VAO;
 
     glGenVertexArrays(1, &VAO); // Generate 1 VAO and store VAO ID
@@ -181,6 +181,8 @@ int main()
 
     // OpenGL allows us to bind several buffers at once as long as they have a different buffer type.
     glBindBuffer(GL_ARRAY_BUFFER, VBO); // Bind the newly created VBO to the GL_ARRAY_BUFFER
+
+
     /* Copies the previously defined vertex data into the buffer's memory */
     /* This function is specifically targeted to copy user-defined data into the currently bound buffer */
     /* ARGUMENTS:
@@ -206,7 +208,7 @@ int main()
            We specified the location of the position vertex attribute in the vertex shader code with layout (location = 0)
            This sets the location of the vertex attribute to 0. Since we want to pass data to this vertex attribute, we pass 0.
         2: Size of the vertex attribute. In this case, it's a vec3. 3 values.
-        3: Type of data. vecs in GLSL consist of floating point values.
+        3: Type of data. Vecs in GLSL consist of floating point values.
         4: Specifies if we want the data to be normalized. This is not relevant to us. We leave it GL_FALSE
         5: Stride. This is the space between consecutive vertex attributes(See VertexBufferData.png).
         6: Offset of where the position data begins in the buffer. For now, the position data is at the start of the data array. */
@@ -250,8 +252,6 @@ int main()
         glDrawArrays(GL_TRIANGLES, 0, 3);
         // glBindVertexArray(0); // no need to unbind it every time 
 
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-
         glfwSwapBuffers(window); // Double buffered. Avoid flickering issues common to single buffer
         glfwPollEvents(); // Check for mouse/keyboard input etc.
     }
@@ -267,7 +267,7 @@ int main()
 
 
 /* Resize callback function */
-/* Whenever the window changes in size, GLFW calls this functionand fills in the proper arguments */
+/* Whenever the window changes in size, GLFW calls this function and fills in the proper arguments */
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
     /* Set dimensions of rendering window */
