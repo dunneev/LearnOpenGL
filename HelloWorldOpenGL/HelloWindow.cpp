@@ -149,20 +149,22 @@ int main()
     /*******************************************************************************************************************************
     Buffer operations
     *******************************************************************************************************************************/
-    /* Triangle coordinates */
+    /* Rectangle coordinates */
     /* These NDCs(Normalized Device Coordinates) will be transformed 
        to screen-space coordinates via the viewport transform using the data we provided with glViewport. 
        The resulting screen-space coordinates are then transformed to fragments as inputs to our fragment shader. */
     float vertices[] = {
-    -0.5f, -0.5f, 0.0f,
-     0.5f, -0.5f, 0.0f,
-     0.0f,  0.5f, 0.0f
+     0.5f,  0.5f, 0.0f,  // top right
+     0.5f, -0.5f, 0.0f,  // bottom right
+    -0.5f, -0.5f, 0.0f,  // bottom left
+    -0.5f,  0.5f, 0.0f   // top left 
     };
 
-    /* Vertex Buffer Object */
-    /* VBOs store a large number of data in the GPU's memory. This could be vertices, color, normals, WHATEVER.
-    This is ideal because the data will then reside in the video device memory rather than system memory. Speed! */
-    unsigned int VBO; 
+    unsigned int indices[] = {  // note that we start from 0!
+        0, 1, 3,   // first triangle
+        1, 2, 3    // second triangle
+    };
+
 
     /* Vertex Array Object */
     /* Core OpenGL *requires* we use a VAO so it knows what to do with our vertex inputs */
@@ -173,15 +175,29 @@ int main()
       (See VertexArrayObjects1.png and See VertexArrayObjects2.png) */
     unsigned int VAO;
 
-    glGenVertexArrays(1, &VAO); // Generate 1 VAO and store VAO ID
-    glGenBuffers(1, &VBO); // Generate 1 VBO and store buffer reference ID in &VBO
+
+    /* Vertex Buffer Object */
+    /* VBOs store a large number of data in the GPU's memory. This could be vertices, color, normals, WHATEVER.
+    This is ideal because the data will then reside in the video device memory rather than system memory. Speed! */
+    unsigned int VBO; 
+
+    /* EBOs are buffers that store indices that OpenGL uses to decide what vertices to draw.
+    In this way, we can eliminate overhead by eliminating redundant vertices.
+    The only reason there’s a distinction between these and VBOs is that we bind these buffer objects
+    to a different bind point so the GPU pulls DrawElements index data from it rather than from vertex attributes. */
+    unsigned int EBO;
+
+    /* Generate and store objects */
+    glGenVertexArrays(1, &VAO); // Generate 1 VAO and store generated Object IDs as array at &VAO
+    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
 
     /* Bind VAO first, then bind and set VBO(s), then configure vertex attribute(s) */
     glBindVertexArray(VAO);
 
-    // OpenGL allows us to bind several buffers at once as long as they have a different buffer type.
-    glBindBuffer(GL_ARRAY_BUFFER, VBO); // Bind the newly created VBO to the GL_ARRAY_BUFFER
-
+    
+    /* Bind the newly created VBO to the GL_ARRAY_BUFFER */
+    glBindBuffer(GL_ARRAY_BUFFER, VBO); 
 
     /* Copies the previously defined vertex data into the buffer's memory */
     /* This function is specifically targeted to copy user-defined data into the currently bound buffer */
@@ -202,6 +218,11 @@ int main()
        Since the previously defined VBO is still bound, 
        calling glVertexAttribPointer below will result in vertex attribute 0 associated with said VBO's vertex data */
 
+    /* OpenGL allows us to bind several buffers at once as long as they have a different buffer type. The VBO is bound to the GL_ARRAY_BUFFER above. */
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+
     /* Tell OpenGL how to interpret vertex data per vertex attribute
     Parameters are as follows:
         1: Which vertex attribute we want to configure. 
@@ -213,17 +234,22 @@ int main()
         5: Stride. This is the space between consecutive vertex attributes(See VertexBufferData.png).
         6: Offset of where the position data begins in the buffer. For now, the position data is at the start of the data array. */
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(0); // For clarity, the parameter is an index, not a boolean.
 
     /* The call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind */
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+
+    /* Remember: do NOT unbind the EBO while a VAO is active as the bound element buffer object IS stored in the VAO; keep the EBO bound. */
+    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
 
     // We can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
     // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
     glBindVertexArray(0);
 
     // uncomment this call to draw in wireframe polygons.
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     /*******************************************************************************************************************************
     End buffer operations
@@ -249,7 +275,20 @@ int main()
 
         /* We only have a single VAO - no need to bind it every time - but we'll do so to keep things a bit more organized */
         glBindVertexArray(VAO); 
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+
+        /* As opposed to glDrawArrays, glDrawElements indicates we want to render the triangles from an index buffer.
+           We're going to draw using indices provided in the EBO currently bound. This means we have to bind the corresponding EBO 
+           each time we want to render an object with indices. The last EBO that gets bound while is stored as the VAO's EBO.
+           That last sentence seems self-explanetory, but I'm keeping it for completeness. See VertexArrayObjectsEBO for visualization. */
+      
+        //glDrawArrays(GL_TRIANGLES, 0, 6);
+        /* Parameters:
+           1: Drawing mode
+           2: Number of elements
+           3: Type of indices
+           4: EBO offset */
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); 
+
         // glBindVertexArray(0); // no need to unbind it every time 
 
         glfwSwapBuffers(window); // Double buffered. Avoid flickering issues common to single buffer
@@ -259,7 +298,10 @@ int main()
     End render loop
     *******************************************************************************************************************************/
 
-
+    /* (Optional) De-allocate all resources once they've outlived their purpose */
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &EBO);
 
     glfwTerminate();
     return 0;
